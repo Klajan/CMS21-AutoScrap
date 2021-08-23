@@ -2,7 +2,8 @@ import mss
 import cv2
 import numpy
 import keyboard
-from time import time, sleep
+#from time import time, sleep
+import time
 from pynput.keyboard import Key, Controller
 sct = mss.mss() 
 
@@ -56,8 +57,9 @@ else:
 print("Now running...")
 input_keyboard = Controller()
 
-i = 0
 while True:
+    if keyboard.is_pressed('q'):
+        break
     scr = numpy.array(sct.grab(monitor_bb))
     scr_remove = scr[:,:,:3]
     if is_started == False:
@@ -73,6 +75,3 @@ while True:
             input_keyboard.press(Key.space)
             input_keyboard.release(Key.space)
             is_started = False
-    if keyboard.is_pressed('q'):
-        break
-    i += 1
