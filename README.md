@@ -1,7 +1,7 @@
 
 # CMS 2021 Auto Scrap
 
-Automates the process of scraping parts using pattern matching
+Automates the process of scraping or repairing parts using pattern matching
 
 
 
