@@ -10,11 +10,9 @@ Automates the process of scraping parts using pattern matching
 
 Here is the list of dependency
 
- - Python
+ - Python >= 3.7
  - Numpy
  - OpenCV2
- - Keyboard
- - Pillow
  - MSS
  - PyInput
 
@@ -36,7 +34,9 @@ Tested from 720p to 1440p!
 
 Yes, unfortunatly, to solve this issue we would need to have more iteration of the program per second but I don't know how to optimize this code
 
-*Considering that MSS & OpenCV2 take ~7-8ms improvements might be minimal*
+Multithreading did improve performance up to 40% but it can still miss on rare ocasions and slower computers.
+
+*Further improvent could be done with a better algothrithm*
 
 #### Might rarely not scrap item
 

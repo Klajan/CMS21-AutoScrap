@@ -1,12 +1,8 @@
 import mss
 import cv2
 import numpy
-
-#from time import time, sleep
-#import time
 from multiprocessing import Pipe, Process, Event
 from pynput.keyboard import Key, Controller, Events as KeyEvents
-#sct = mss.mss() 
 
 # config starts here
 # default monitor is 1, change this if running CMS21 on a different monitor
@@ -104,10 +100,10 @@ if __name__ == "__main__":
         print("Now running...")
         while True:
             event_key = events.get()
-            if str(event_key.key) == "'q'":
-                break;
-            if event_key.key == Key.esc:
-                break;
+            if (event_key.key == Key.esc or
+                    event_key.key == Key.enter or
+                    str(event_key.key) == "'q'"):
+                break
         print("Stopping Workers...")
         event_stop.set()
         conn2.close()
