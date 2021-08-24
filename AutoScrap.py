@@ -66,6 +66,9 @@ def match(pipe, start, action, arrow):
         print("Exiting match worker...")
 
 if __name__ == "__main__":
+    # fix for broken mp if build to exe
+    multiprocessing.freeze_support()
+
     monitor = mss.mss().monitors[monitor_number]
 
     print("Running on Monitor ", monitor_number)

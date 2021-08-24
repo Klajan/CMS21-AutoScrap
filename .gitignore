@@ -1,2 +1,6 @@
 ﻿/.vs
 /venv
+/build/*
+/dist/*
+/__pycache__
+/AutoScrap.spec
