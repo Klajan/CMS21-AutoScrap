@@ -4,6 +4,8 @@ import numpy
 from multiprocessing import Pipe, Process, Event
 from pynput.keyboard import Key, Controller, Events as KeyEvents
 
+import time
+
 # config starts here
 # default monitor is 1, change this if running CMS21 on a different monitor
 monitor_number = 1
@@ -15,13 +17,25 @@ def grab(pipe, monitor, event_stop=None):
             pipe.send(numpy.array(sct.grab(monitor))[:,:,:3])
         print("Exiting grab worker...")
 
-def match(pipe, start, action, event_stop=None):
+def match(pipe, start, action, arrow):
     is_started = False
+    is_found = False
+    match_width = action.shape[1]
+    match_height = 0
+    match_x = 0
+    match_y = 0
+    
+    # limit to red channel for better matching across backgrounds
+    arrow_grey = arrow[:,:,2:3]
+    
     active_keyboard = Controller()
     try:
         while True:
             scr = pipe.recv()
             if is_started == False:
+                # find bounding box height once
+                if match_height == 0:
+                    match_height = scr.shape[0]
                 result = cv2.matchTemplate(scr, start, cv2.TM_CCOEFF_NORMED)
                 _, max_val, _, max_loc = cv2.minMaxLoc(result)
                 if max_val > 0.75:
@@ -29,13 +43,26 @@ def match(pipe, start, action, event_stop=None):
                     active_keyboard.release(Key.space)
                     is_started = True
             else:
-                result = cv2.matchTemplate(scr, action, cv2.TM_CCOEFF_NORMED)
-                _, max_val, _, max_loc = cv2.minMaxLoc(result)
-                if max_val > 0.92:
-                    active_keyboard.press(Key.space)
-                    active_keyboard.release(Key.space)
-                    is_started = False
-    except:
+                if is_found == False:
+                    # find all matches for pattern and select leftmost
+                    result = cv2.matchTemplate(scr, action, cv2.TM_CCOEFF_NORMED)
+                    (y, x) = numpy.where(result > 0.85)
+                    if y.size > 0:
+                        is_found = True
+                        match_x = min(x)
+                        match_y = min(y)
+                else:
+                    # limit search to directly above matched area in red channel and find the arrow
+                    scr_crop = scr[0:match_y, match_x:match_x+match_width, 2:3]
+                    #scr_crop = scr[0:match_height, match_x:match_x+match_width, :]
+                    result = cv2.matchTemplate(scr_crop, arrow_grey, cv2.TM_CCOEFF_NORMED)
+                    _, max_val, _, max_loc = cv2.minMaxLoc(result)
+                    if max_val > 0.9:
+                        active_keyboard.press(Key.space)
+                        active_keyboard.release(Key.space)
+                        is_started = False
+                        is_found = False
+    except EOFError:
         print("Exiting match worker...")
 
 if __name__ == "__main__":
@@ -70,15 +97,17 @@ if __name__ == "__main__":
                     "height": int(monitor["height"] * 20 / 100),
                     "mon": int(monitor_number)
                 }
-                action_base = cv2.imread('Ressources/repair.png')
+                action_base = cv2.imread('Ressources/good.png')
                 start_base = cv2.imread('Ressources/start_repair.png')
                 break
-
+        
+        arrow_base = cv2.imread('Ressources/arrow.png')
         scale = monitor["height"] / 1440;
         if scale == 1.0:
             start = start_base
             action = action_base
-        else:
+            arrow = arrow_base
+        else: 
             dim_start = (
                 int(round(start_base.shape[1] * scale)),
                 int(round(start_base.shape[0] * scale))
@@ -87,14 +116,19 @@ if __name__ == "__main__":
                 int(round(action_base.shape[1] * scale)),
                 int(round(action_base.shape[0] * scale))
                 )
+            dim_arrow = (
+                int(round(action_base.shape[1] * scale)),
+                int(round(action_base.shape[0] * scale))
+                )
             start = cv2.resize(start_base, dim_start)
             action = cv2.resize(action_base, dim_action)
+            arrow = cv2.resize(arrow_base, dim_action)
 
         # start script
         conn1, conn2 = Pipe(False)
         event_stop = Event()
         p_grab = Process(target=grab, args=(conn2, monitor_bb, event_stop))
-        p_match = Process(target=match, args=(conn1, start, action, event_stop))
+        p_match = Process(target=match, args=(conn1, start, action, arrow))
         p_grab.start()
         p_match.start()
         print("Now running...")
