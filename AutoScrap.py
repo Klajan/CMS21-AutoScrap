@@ -120,12 +120,12 @@ if __name__ == "__main__":
                 int(round(action_base.shape[0] * scale))
                 )
             dim_arrow = (
-                int(round(action_base.shape[1] * scale)),
-                int(round(action_base.shape[0] * scale))
+                int(round(arrow_base.shape[1] * scale)),
+                int(round(arrow_base.shape[0] * scale))
                 )
             start = cv2.resize(start_base, dim_start)
             action = cv2.resize(action_base, dim_action)
-            arrow = cv2.resize(arrow_base, dim_action)
+            arrow = cv2.resize(arrow_base, dim_arrow)
 
         # start script
         conn1, conn2 = Pipe(False)
