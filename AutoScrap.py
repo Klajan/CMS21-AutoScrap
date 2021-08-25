@@ -1,7 +1,7 @@
 import mss
 import cv2
 import numpy
-from multiprocessing import Pipe, Process, Event
+from multiprocessing import Pipe, Process, Event, freeze_support as mp_freeze_support
 from pynput.keyboard import Key, Controller, Events as KeyEvents
 
 import time
@@ -67,7 +67,7 @@ def match(pipe, start, action, arrow):
 
 if __name__ == "__main__":
     # fix for broken mp if build to exe
-    multiprocessing.freeze_support()
+    mp_freeze_support()
 
     monitor = mss.mss().monitors[monitor_number]
 
