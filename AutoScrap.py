@@ -13,8 +13,16 @@ monitor_number = 1
 
 def grab(pipe, monitor, event_stop=None):
     with mss.mss() as sct:
+        i=0
+        t1 = 0
         while not event_stop.is_set():
+            t0 = time.perf_counter()
             pipe.send(numpy.array(sct.grab(monitor))[:,:,:3])
+            i += 1
+            t1 += time.perf_counter() - t0
+            if i == 1000:
+                print(t1 / 1000)
+
         print("Exiting grab worker...")
 
 def match(pipe, start, action, arrow):
@@ -36,6 +44,7 @@ def match(pipe, start, action, arrow):
                 # find bounding box height once
                 if match_height == 0:
                     match_height = scr.shape[0]
+                    print(match_height)
                 result = cv2.matchTemplate(scr, start, cv2.TM_CCOEFF_NORMED)
                 _, max_val, _, max_loc = cv2.minMaxLoc(result)
                 if max_val > 0.75:
@@ -51,6 +60,7 @@ def match(pipe, start, action, arrow):
                         is_found = True
                         match_x = min(x)
                         match_y = min(y)
+                        cv2.imwrite("test.png", scr[0:match_height, match_x:match_x+match_width, :])
                 else:
                     # limit search to directly above matched area in red channel and find the arrow
                     scr_crop = scr[0:match_y, match_x:match_x+match_width, 2:3]
@@ -90,7 +100,6 @@ if __name__ == "__main__":
                     "mon": int(monitor_number)
                 }
                 action_base = cv2.imread('Ressources/perfect.png')
-                start_base = cv2.imread('Ressources/start_scrap.png')
                 break
             if str(event_key.key) == "'r'":
                 monitor_bb = {
@@ -101,11 +110,12 @@ if __name__ == "__main__":
                     "mon": int(monitor_number)
                 }
                 action_base = cv2.imread('Ressources/good.png')
-                start_base = cv2.imread('Ressources/start_repair.png')
                 break
-        
+
+        start_base = cv2.imread('Ressources/start.png')
         arrow_base = cv2.imread('Ressources/arrow.png')
         scale = monitor["height"] / 1440;
+        print("Scale is: ", scale)
         if scale == 1.0:
             start = start_base
             action = action_base
