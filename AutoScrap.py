@@ -1,16 +1,17 @@
 import mss
 import cv2
 import numpy
+import json
 from multiprocessing import Process, Event, Lock, freeze_support as mp_freeze_support
 from multiprocessing.managers import SharedMemoryManager
 from pynput.keyboard import Key, Controller, Events as KeyEvents
 
-import time
 
-# config starts here
-# default monitor is 1, change this if running CMS21 on a different monitor
-monitor_number = 1
-# config ends here
+
+def read_settings():
+    with open('settings.json', 'r') as file:
+        data = json.load(file)
+        return data
 
 def grab(shared_mem: tuple, lock, event_stop, monitor):
     with mss.mss() as sct:
@@ -82,10 +83,11 @@ if __name__ == "__main__":
     # fix for broken mp if build to exe
     mp_freeze_support()
 
+    settings = read_settings()
 
-    monitor = mss.mss().monitors[monitor_number]
+    monitor = mss.mss().monitors[settings["monitor"]]
 
-    print("Running on Monitor", monitor_number, monitor["width"], "x", monitor["height"] )
+    print("Running on Monitor", settings["monitor"], monitor["width"], "x", monitor["height"] )
     print("Press 's' to scrap")
     print("Press 'r' to repair")
     print("Press 'q' anytime to quit")
@@ -110,7 +112,7 @@ if __name__ == "__main__":
                     "top": top,
                     "width": int(monitor["width"] * 32.50 / 100),
                     "height": int(monitor["height"] * 18.50 / 100),
-                    "mon": int(monitor_number)
+                    "mon": int(settings["monitor"])
                 }
         start_base = cv2.imread('Ressources/start.png')
         arrow_base = cv2.imread('Ressources/arrow.png')
